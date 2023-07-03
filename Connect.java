@@ -8,7 +8,7 @@ public class Connect extends JFrame implements ActionListener{
     JMenuItem back,exit;
     JLabel username_label,port_label;
     JTextField username_tf,port_tf;
-    JButton connect_button;
+    JButton client_connect_button,server_connect_button;
     Connect(){
         makeGUI();
         addEventListener();
@@ -20,9 +20,9 @@ public class Connect extends JFrame implements ActionListener{
         // creating menu
         menubar=new JMenuBar();
         menu=new JMenu("Options");
-        back=new JMenuItem("Back");
+        //back=new JMenuItem("Back");
         exit=new JMenuItem("Exit");
-        menu.add(back);
+        //menu.add(back);
         menu.add(exit);
         menubar.add(menu);
         frame.setJMenuBar(menubar);
@@ -50,12 +50,18 @@ public class Connect extends JFrame implements ActionListener{
           frame.add(port_label);
           frame.add(port_tf);
 
-          // adding button
-        connect_button=new JButton("Connect");
-        connect_button.setBounds(94,350,200,30);
-        connect_button.setBackground(Color.black);
-        connect_button.setForeground(Color.white);
-        frame.add(connect_button);
+          // adding buttons
+        client_connect_button=new JButton("Connect As Client");
+        client_connect_button.setBounds(94,350,200,30);
+        client_connect_button.setBackground(Color.black);
+        client_connect_button.setForeground(Color.white);
+        frame.add(client_connect_button);
+
+        server_connect_button=new JButton("Connect As Server");
+        server_connect_button.setBounds(94,390,200,30);
+        server_connect_button.setBackground(Color.black);
+        server_connect_button.setForeground(Color.white);
+        frame.add(server_connect_button);
 
         frame.setTitle("Chat App v1- Connect");
         frame.getContentPane().setBackground(Color.WHITE);
@@ -66,17 +72,18 @@ public class Connect extends JFrame implements ActionListener{
         frame.setVisible(true);
     }
     private void addEventListener() {
-        back.addActionListener(this);
+        //back.addActionListener(this);
         exit.addActionListener(this);
-        connect_button.addActionListener(this);
+        client_connect_button.addActionListener(this);
+        server_connect_button.addActionListener(this);
     }
     @Override
     public void actionPerformed(ActionEvent event) {
-       if(event.getSource()==back){
-           frame.setVisible(false);
-           new Main().setVisible(true);
-       }
-       else if(event.getSource()==exit){
+//       if(event.getSource()==back){
+//           frame.setVisible(false);
+//           new Main().setVisible(true);
+//       }
+       if(event.getSource()==exit){
            System.exit(0);
        }
        else{
@@ -102,7 +109,13 @@ public class Connect extends JFrame implements ActionListener{
                }
                else{
                    frame.setVisible(false);
-                   new Chat(username,port).setVisible(true);
+                   if(event.getSource()==server_connect_button){
+                       JOptionPane.showMessageDialog(null,"Waiting for the client to connect.");
+                       new Chat(true,username,port).setVisible(true);
+                   }
+                   else{
+                       new Chat(false,username,port).setVisible(true);
+                   }
                }
            }
        }

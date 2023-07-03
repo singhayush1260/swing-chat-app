@@ -1,28 +1,37 @@
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
-
-public class Server {
+import java.net.*;
+import java.io.*;
+class Server
+{
     ServerSocket server;
-    Socket socket;
-    BufferedReader bufferedReader;
+    Socket socket; //client
+    BufferedReader buffered_reader;
     PrintWriter writer;
-    Server(int PORT){
-        try{
+    int PORT=3000;
+    Server(int PORT)
+    {
+        try
+        {
             server=new ServerSocket(PORT);
+            System.out.println("Server is ready to accept request at PORT "+PORT);
             socket=server.accept();
-            bufferedReader=new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            buffered_reader=new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer=new PrintWriter(socket.getOutputStream());
         }
-        catch (Exception e){
-            System.out.println(e);
+        catch(Exception e){
+            e.printStackTrace();
         }
-
     }
-
-    public static void main(String[] args) {
+    public Socket getSocket(){
+        return socket;
+    }
+    public BufferedReader getBufferedReader(){
+        return buffered_reader;
+    }
+    public PrintWriter getWriter(){
+        return writer;
+    }
+    public static void main(String args[])
+    {
         new Server(3000);
     }
 }

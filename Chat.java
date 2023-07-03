@@ -5,29 +5,43 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import javax.swing.*;
 
-public class Chat extends JFrame implements KeyListener {
+public class Chat extends JFrame implements KeyListener, ActionListener {
     JFrame frame;
     JPanel chat_area;
     JTextField message_input;
     JButton send_button;
-    int PORT;
     Socket socket;
     BufferedReader bufferedReader;
     PrintWriter writer;
-    Chat(String username, int PORT) {
-        this.PORT=PORT;
+
+    JMenuBar menubar;
+    JMenu options;
+    JMenuItem exit;
+    String username;
+    Chat(boolean isServer,String username, int PORT) {
+        this.username=username;
         makeGUI();
         addEventListener();
-        establishConnection();
-        //startWriting();
-        startReading();
+        if(isServer){
+            startServer(PORT);
+        }
+        else{
+            startClient(PORT);
+            startReading();
+        }
     }
-
-    private void establishConnection() {
+    private void startClient(int PORT) {
         Client client=new Client(PORT);
         bufferedReader=client.getBufferedReader();
         socket=client.getSocket();
         writer=client.getWriter();
+    }
+    private void startServer(int PORT){
+        Server server=new Server(PORT);
+        writer=server.getWriter();
+        bufferedReader=server.getBufferedReader();
+        socket=server.getSocket();
+        startReading();
     }
     private void makeGUI() {
         frame = new JFrame();
@@ -38,12 +52,20 @@ public class Chat extends JFrame implements KeyListener {
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        // adding menubar
+        menubar=new JMenuBar();
+        options=new JMenu("Options");
+        exit=new JMenuItem("Exit");
+        options.add(exit);
+        menubar.add(options);
+        frame.setJMenuBar(menubar);
+
         // Adding message area
         chat_area = new JPanel();
         chat_area.setLayout(new BoxLayout(chat_area,BoxLayout.Y_AXIS));
         chat_area.setPreferredSize(new Dimension(400, 400));
         JScrollPane jScrollPane=new JScrollPane(chat_area);
-        frame.add(jScrollPane,BorderLayout.CENTER);
+        frame.add(jScrollPane);
 
         // Adding message input box
         message_input = new JTextField();
@@ -56,19 +78,30 @@ public class Chat extends JFrame implements KeyListener {
 
     private void addEventListener() {
         message_input.addKeyListener(this);
+        exit.addActionListener(this);
     }
-
+    @Override
+    public void actionPerformed(ActionEvent event) {
+      addMessage("Exit Message","Session has been terminated.");
+        System.exit(0);
+    }
     public void keyTyped(KeyEvent e) {}
 
     public void keyPressed(KeyEvent e) {}
 
     public void keyReleased(KeyEvent e) {
         if (e.getKeyCode() == 10) {
-            String message = message_input.getText();
-            writer.println(message);
-            writer.flush();
-            addMessage(true,message);
-            message_input.setText("");
+            if(writer==null){
+                JOptionPane.showMessageDialog(null ,"Waiting for the client to send the request.");
+            }
+            else{
+                String message = message_input.getText();
+                System.out.println("writer"+writer);
+                writer.println(message);
+                writer.flush();
+                addMessage(username,message);
+                message_input.setText("");
+            }
         }
     }
 
@@ -88,9 +121,9 @@ public class Chat extends JFrame implements KeyListener {
                         socket.close();
                         break;
                     }
-                    System.out.println("Server: "+message);
+                    System.out.println(username+":"+message);
                     //message_area.append("Server: "+msg+"\n");
-                    addMessage(false,message);
+                    addMessage(username,message);
                 }
             }
             catch(Exception e)
@@ -100,32 +133,23 @@ public class Chat extends JFrame implements KeyListener {
         };
         new Thread(r1).start();
     }
-    private void addMessage(boolean sent, String message) {
+    private void addMessage(String sender, String message) {
         JPanel message_panel = new JPanel();
-        message_panel.setLayout(new BorderLayout());
-        //JLabel senderLabel = new JLabel(sender);
+        message_panel.setLayout(new BoxLayout(message_panel,BoxLayout.Y_AXIS));
+        JLabel senderLabel = new JLabel(sender);
+        //sent?senderLabel=new JLabel("You"):new JLabel("Server");
         JTextArea messageArea = new JTextArea(message);
         messageArea.setLineWrap(true);
         messageArea.setWrapStyleWord(true);
         messageArea.setEditable(false);
-
-        if (sent) {
-            message_panel.setBackground(Color.CYAN);
-            //messagePanel.add(senderLabel, BorderLayout.PAGE_START);
-            message_panel.add(messageArea, BorderLayout.CENTER);
-            message_panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        } else {
-            message_panel.setBackground(Color.YELLOW);
-            //messagePanel.add(senderLabel, BorderLayout.PAGE_START);
-            message_panel.add(messageArea, BorderLayout.CENTER);
-            message_panel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-        }
-
+        message_panel.add(senderLabel);
+        message_panel.add(messageArea);
         chat_area.add(message_panel);
         frame.revalidate(); // Revalidate the frame to reflect the changes
     }
 
     public static void main(String[] args) {
-        new Chat("", 3000);
+       new Chat(true,"", 3000);
     }
+
 }
